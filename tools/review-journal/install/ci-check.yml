@@ -57,12 +57,12 @@ jobs:
             exit 0
           fi
           # Only comment if there's content (BACKFILL NEEDED / RESOLVE NEEDED).
-          if ! grep -qE 'BACKFILL NEEDED|RESOLVE NEEDED' /tmp/review-journal.stderr; then
+          if ! grep -qE 'BACKFILL NEEDED|RESOLVE NEEDED|TRIAGE NEEDED' /tmp/review-journal.stderr; then
             exit 0
           fi
           {
             printf '### review-journal — items need a verdict block\n\n'
-            printf 'The following resolved threads on this PR have no `review-verdict` block. '
+            printf 'The following review threads on this PR still need a structured disposition and/or resolution. '
             printf 'Per the project review protocol, every reply should begin with one. '
             printf 'See `tools/review-journal/README.md` for the format.\n\n'
             printf '```\n'

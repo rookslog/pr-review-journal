@@ -1263,6 +1263,7 @@ def _sync_core(args: argparse.Namespace, infer: bool, write_backfill: bool) -> i
     inferred_pairs: list[tuple[ThreadRecord, VerdictBlock]] = []
     backfill_needed: list[ThreadRecord] = []
     resolve_needed: list[ThreadRecord] = []
+    triage_needed: list[ThreadRecord] = []
 
     for t in threads:
         rec = build_record(t, cfg)
@@ -1322,6 +1323,10 @@ def _sync_core(args: argparse.Namespace, infer: bool, write_backfill: bool) -> i
                     backfill_needed.append(rec)
             else:
                 backfill_needed.append(rec)
+        else:
+            # An open tracked thread with no structured disposition is not
+            # merge-ready: there is neither a recorded decision nor closure.
+            triage_needed.append(rec)
 
         records.append(rec)
 
@@ -1374,6 +1379,10 @@ def _sync_core(args: argparse.Namespace, infer: bool, write_backfill: bool) -> i
             r for r in resolve_needed
             if cfg.is_tracked_reviewer(r.reviewer)
         ]
+        triage_filtered = [
+            r for r in triage_needed
+            if cfg.is_tracked_reviewer(r.reviewer)
+        ]
         for rec in backfill_filtered:
             sys.stderr.write(
                 f"BACKFILL NEEDED: thread {rec.id} ({rec.path}:{rec.line}) "
@@ -1382,7 +1391,13 @@ def _sync_core(args: argparse.Namespace, infer: bool, write_backfill: bool) -> i
             sys.stderr.write(
                 f"RESOLVE NEEDED: thread {rec.id} ({rec.path}:{rec.line}) "
                 f"by {rec.reviewer} — has a verdict block but is unresolved.\n")
-        if enforce_mode == "strict" and (backfill_filtered or resolve_filtered):
+        for rec in triage_filtered:
+            sys.stderr.write(
+                f"TRIAGE NEEDED: thread {rec.id} ({rec.path}:{rec.line}) "
+                f"by {rec.reviewer} — unresolved and has no verdict block.\n")
+        if enforce_mode == "strict" and (
+            backfill_filtered or resolve_filtered or triage_filtered
+        ):
             return 1
 
     return 0
