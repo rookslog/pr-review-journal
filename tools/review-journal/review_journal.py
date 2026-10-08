@@ -352,10 +352,12 @@ class Config:
         return reviewer_login
 
     def is_tracked_reviewer(self, reviewer_login: str) -> bool:
-        """True if the reviewer (or one of its aliases) is in `cfg.reviewers`.
-        Used by enforcement to scope BACKFILL/RESOLVE policy violations to the
-        configured reviewer allowlist."""
-        if reviewer_login in self.reviewers:
+        """True if the reviewer is covered by the enforcement policy.
+
+        A literal "*" in `cfg.reviewers` means every reviewer is tracked;
+        otherwise canonical logins and configured aliases are matched.
+        """
+        if "*" in self.reviewers or reviewer_login in self.reviewers:
             return True
         # An alias counts if the canonical login is tracked.
         canonical = self.canonical_login_for(reviewer_login)
