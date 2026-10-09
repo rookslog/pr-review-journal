@@ -207,6 +207,37 @@ of the shared thing** has been checked — not every use inside the file you hap
 editing. Two files consuming one shared config list is the common case, and fixing one of them
 while writing "fixed as a class" is how a closed finding reopens two rounds later.
 
+## Stopping rule
+
+The budget says when a loop is unhealthy; this says when it is **over**. Each clause closes a
+gap that kept a real PR running for seven rounds (worked case below).
+
+1. **The conditional re-summon is a round-2 rule.** After round 2, summon a round only if the
+   previous round carried a *blocking* finding: Codex P0/P1, CodeRabbit Critical/Major, or a
+   finding in a risk class the repo declares irreversible (for example double send, wrong paid
+   model, data leak, focus theft). `ACCEPTED_MODIFIED` verdicts do not summon round 3+ by
+   themselves; nearly every fix chooses its own mechanism, so that condition never terminates.
+2. **A round with no blocking finding ends the loop.** Fix its findings in the same push only if
+   they touch an irreversible-risk class; otherwise dispose `DEFERRED` with one follow-up issue.
+   The fixes' own oracles (failing-then-passing tests) and CI confirm them; no further round.
+3. **Escalation does not reset the count.** After the tripwire's escalation (clustering, split,
+   redesign, reviewer calibration), the confirming round is round N+1. If it carries a blocking
+   finding the PR goes to the operator; if not, the loop ends.
+4. **Stricter protocol wins.** If the repo or operator sets its own stop ("continue while P1s
+   remain; stop at round 4"), apply whichever stops sooner. An operator's maximum is a ceiling,
+   not a quota to spend.
+5. **Prove the main path first.** A PR that adds a new end-to-end path needs one real end-to-end
+   run (integration or live) before round 2, or a recorded reason it cannot have one. Reviewers
+   read diffs; they cannot find what only the real environment shows.
+
+**Worked case (2026-10-09, chatgpt-research-adapter PR #100).** Seven Codex rounds, 29 findings,
+every one legitimate. All four P1s came in rounds 1–2; rounds 3–7 were P2-only failure-path
+edges. The tripwire fired at round 3 and was waved through under an operator cap of round 4, the
+redesign arrived at round 5, and the round-2 re-summon condition then restarted the loop twice
+more. Meanwhile, the bug that actually broke the product (the provider trims the stored prompt,
+so binding refused a correct reply) was found by the first live end-to-end send, not by any
+round. Clauses 1, 3 and 5 would each have stopped this loop at round 3.
+
 ## At the tripwire (round 3 with substantive findings)
 
 Stop fixing. Write a short note on the PR and pick one:

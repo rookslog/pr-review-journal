@@ -87,6 +87,20 @@ principle behind the mechanics: **merge only a diff some reviewer has seen, or a
 application of a reviewer's own suggestion with an oracle.** Worked case and the assumption
 this rests on: `references/round-economy.md`.
 
+**The loop has an end, and the conditional rule above never overrides it.** The re-summon
+condition applies to round 2 only. From round 3 on, a round is summoned only if the previous
+round left a **blocking** finding unresolved or newly fixed: Codex P0/P1, CodeRabbit
+Critical/Major, or anything that touches a risk the repo declares irreversible. `ACCEPTED_MODIFIED`
+alone never summons round 3+. A P2-only fix batch is confirmed by its own oracles (a test seen to
+fail, then pass) and CI, not by another round. Its findings are fixed now only if they touch an
+irreversible-risk class; otherwise they get `DEFERRED` with one follow-up issue. Escalating at the
+tripwire does not reset the count: a "confirming round" after a redesign is still round N+1, and a
+round with no blocking finding ends the loop. Where a repo or operator protocol also sets a stop,
+the stricter rule governs summoning, and an operator's cap is a maximum, not a target. A PR that
+adds a new end-to-end path gets one real end-to-end run before round 2, or records why it cannot;
+review rounds polish failure paths and do not substitute for proving the main path. Full rule
+and worked case: `references/round-economy.md` § "Stopping rule".
+
 Substantive = not `REJECTED_FALSE_POSITIVE`, not `OBSOLETE`, not a nit you'd have shipped
 anyway. Write the per-round count in the round summary, so the tripwire cannot be evaded by
 not counting. Full budget table, escalation options at the tripwire, rationalization table,
