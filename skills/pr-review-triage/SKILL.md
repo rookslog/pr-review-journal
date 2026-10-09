@@ -87,6 +87,26 @@ principle behind the mechanics: **merge only a diff some reviewer has seen, or a
 application of a reviewer's own suggestion with an oracle.** Worked case and the assumption
 this rests on: `references/round-economy.md`.
 
+**The loop has an end, and the conditional rule above never overrides it.** The re-summon
+condition applies to round 2 only. From round 3 on, a round is summoned only if the previous
+round left a **blocking** finding unresolved or newly fixed. Blocking means canonical `blocker` or
+`high` under the severity mapping in `docs/design/reviewer-capability-interface.md` §9.1 (Codex
+P0/P1, CodeRabbit Critical/Major, Copilot High, a human's must-fix), whichever reviewer filed it,
+or anything that touches a risk the repo declares irreversible. A blocker dispositioned
+`REJECTED_FALSE_POSITIVE` changes no code and does not count. `ACCEPTED_MODIFIED` alone never
+summons round 3+. A non-blocking fix batch is confirmed by its own oracles (a test seen to fail,
+then pass) and CI, not by another round. Its findings are fixed now only if they touch an
+irreversible-risk class; otherwise they get `DEFERRED` with one follow-up issue, which is a valid
+deferral artifact for this case. Escalating at the tripwire does not reset the count: an
+escalation that changes the implementation always gets one confirming round, and that round is
+N+1. Where a repo or operator protocol also sets a stop, the stricter rule governs summoning, and
+an operator's cap is a maximum, not a target. A PR that adds a new end-to-end path gets one real
+end-to-end run before round 2 or merge, whichever comes first, in an environment the operator has
+approved for it (a live run that sends, spends or mutates real data needs explicit operator
+approval), or it records why it cannot. Review rounds polish failure paths and do not substitute
+for proving the main path. Full rule
+and worked case: `references/round-economy.md` § "Stopping rule".
+
 Substantive = not `REJECTED_FALSE_POSITIVE`, not `OBSOLETE`, not a nit you'd have shipped
 anyway. Write the per-round count in the round summary, so the tripwire cannot be evaded by
 not counting. Full budget table, escalation options at the tripwire, rationalization table,
@@ -139,7 +159,7 @@ Eight verdicts; full definitions and worked examples in `references/verdicts.md`
 |---|---|
 | `ACCEPTED` | Suggestion applied verbatim or near-verbatim. |
 | `ACCEPTED_MODIFIED` | Underlying observation correct; you applied a different fix. |
-| `DEFERRED` | Real issue, intentionally not fixed in this PR. Reference an ADR or uncertainty-log entry. |
+| `DEFERRED` | Real issue, intentionally not fixed in this PR. Reference an ADR or uncertainty-log entry, or, for a non-blocking finding deferred by the stopping rule, the PR's one follow-up issue. |
 | `REJECTED_FALSE_POSITIVE` | Finding does not describe a real problem. |
 | `REJECTED_BAD_FIT` | Suggestion is a generic pattern that conflicts with a local convention or ADR. |
 | `REJECTED_REGRESSION` | Applying the suggestion would break something verifiable (test, type-check, existing behavior). |
