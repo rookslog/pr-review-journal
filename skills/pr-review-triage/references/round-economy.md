@@ -213,22 +213,31 @@ The budget says when a loop is unhealthy; this says when it is **over**. Each cl
 gap that kept a real PR running for seven rounds (worked case below).
 
 1. **The conditional re-summon is a round-2 rule.** After round 2, summon a round only if the
-   previous round carried a *blocking* finding: Codex P0/P1, CodeRabbit Critical/Major, or a
-   finding in a risk class the repo declares irreversible (for example double send, wrong paid
-   model, data leak, focus theft). `ACCEPTED_MODIFIED` verdicts do not summon round 3+ by
-   themselves; nearly every fix chooses its own mechanism, so that condition never terminates.
+   previous round left a *blocking* finding unresolved or newly fixed. Blocking means canonical
+   `blocker` or `high` under `docs/design/reviewer-capability-interface.md` §9.1 (Codex P0/P1,
+   CodeRabbit Critical/Major, Copilot High, a human's must-fix), from any reviewer, or a finding
+   in a risk class the repo declares irreversible (for example double send, wrong paid model,
+   data leak, focus theft). A blocker dispositioned `REJECTED_FALSE_POSITIVE` changed no code and
+   does not count. `ACCEPTED_MODIFIED` verdicts do not summon round 3+ by themselves; nearly every
+   fix chooses its own mechanism, so that condition never terminates.
 2. **A round with no blocking finding ends the loop.** Fix its findings in the same push only if
    they touch an irreversible-risk class; otherwise dispose `DEFERRED` with one follow-up issue.
+   That issue is the deferral artifact (`verdicts.md`); the reason is the stopping rule itself.
    The fixes' own oracles (failing-then-passing tests) and CI confirm them; no further round.
-3. **Escalation does not reset the count.** After the tripwire's escalation (clustering, split,
-   redesign, reviewer calibration), the confirming round is round N+1. If it carries a blocking
-   finding the PR goes to the operator; if not, the loop ends.
+3. **Escalation does not reset the count.** An escalation at the tripwire that changes the
+   implementation (clustering, split, redesign) always gets one confirming round, even when the
+   round before it had no blocking finding; that round is N+1. Reviewer calibration alone, with no
+   code change, gets none. If the confirming round carries a blocking finding, the PR goes to the
+   operator; if not, the loop ends.
 4. **Stricter protocol wins.** If the repo or operator sets its own stop ("continue while P1s
    remain; stop at round 4"), apply whichever stops sooner. An operator's maximum is a ceiling,
    not a quota to spend.
 5. **Prove the main path first.** A PR that adds a new end-to-end path needs one real end-to-end
-   run (integration or live) before round 2, or a recorded reason it cannot have one. Reviewers
-   read diffs; they cannot find what only the real environment shows.
+   run before round 2 or merge, whichever comes first, or a recorded reason it cannot have one.
+   Run it only in an environment the operator has approved for it: a safe integration
+   environment, or a live run (one that sends a real message, spends a paid provider or mutates
+   production data) with explicit operator approval. Reviewers read diffs; they cannot find what
+   only the real environment shows.
 
 **Worked case (2026-10-09, chatgpt-research-adapter PR #100).** Seven Codex rounds, 29 findings,
 every one legitimate. All four P1s came in rounds 1–2; rounds 3–7 were P2-only failure-path

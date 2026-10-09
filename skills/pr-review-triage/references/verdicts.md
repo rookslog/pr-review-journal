@@ -53,7 +53,7 @@ notes: PID-first match per the suggestion, plus bundle-ID fallback for the relau
 
 The issue is real, but you've intentionally not fixed it in this PR.
 
-**When to use:** the fix requires infrastructure that doesn't exist yet (build config, CI workflow, new dependency); the proper fix is large enough to warrant its own PR; or the deviation is documented in an ADR as an accepted env-bound exception. Always link the ADR or uncertainty-log entry.
+**When to use:** the fix requires infrastructure that doesn't exist yet (build config, CI workflow, new dependency); the proper fix is large enough to warrant its own PR; or the deviation is documented in an ADR as an accepted env-bound exception; or the finding is non-blocking and arrived after round 2, so the stopping rule (`round-economy.md`) defers it. Always link the ADR or uncertainty-log entry; for a stopping-rule deferral, link the PR's one follow-up issue and say the stopping rule is the reason.
 
 **Required fields:** `notes`. `commit` may be present if the deferral is *partially* addressed.
 
@@ -220,7 +220,8 @@ When you're unsure which verdict to pick, walk through these:
    - Yes → `REJECTED_REGRESSION`, cite the breakage.
    - No → continue.
 6. **Are you fixing it in this PR?**
-   - No → `DEFERRED`, link the ADR / uncertainty-log entry.
+   - No → `DEFERRED`, link the ADR / uncertainty-log entry, or, for a non-blocking finding deferred
+     by the stopping rule (`round-economy.md`), the PR's one follow-up issue.
    - Yes → continue.
 7. **Did you apply the suggestion verbatim?**
    - Yes → `ACCEPTED`, cite the commit.
